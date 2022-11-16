@@ -6,9 +6,6 @@ from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
 
-# def check_topic_owner():
-#     if topic.owner != request.user:
-#         raise Http404
 def check_topic_owner(request, topic):
     if topic.owner != request.user:
         raise Http404
