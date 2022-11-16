@@ -6,6 +6,13 @@ from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
 
+# def check_topic_owner():
+#     if topic.owner != request.user:
+#         raise Http404
+def check_topic_owner(request, topic):
+    if topic.owner != request.user:
+        raise Http404
+
 def index(request):
     """The home page for Learning Log."""
     return render(request, 'learning_logs/index.html')
@@ -24,21 +31,22 @@ def topic(request, topic_id):
     """Show a single topic and all its entries."""
     topic = Topic.objects.get(id=topic_id)
     # Make sure the topic belongs to the current user.
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(request, topic)
     entries = topic.entry_set.order_by('-date_added')
     context = {'topic': topic, 'entries': entries}
     return render(request, 'learning_logs/topic.html', context)
+
+
 
 
 @login_required
 def new_topic(request):
     """Add a new topic."""
     if request.method != 'POST':
-        # No date submitted; create a blank form.
+        # No data submitted; create a blank form.
         form = TopicForm()
     else:
-        # Post data submitted; process data.
+        # POST data submitted; process data.
         form = TopicForm(data=request.POST)
         if form.is_valid():
             new_topic = form.save(commit=False)
@@ -55,12 +63,13 @@ def new_topic(request):
 def new_entry(request, topic_id):
     """Add a new entry for a particular topic."""
     topic = Topic.objects.get(id=topic_id)
+    check_topic_owner(request, topic)
 
     if request.method != 'POST':
-        # No date submitted; create a blank form.
+        # No data submitted; create a blank form.
         form = EntryForm()
     else:
-        # Post data submitted; process data.
+        # POST data submitted; process data.
         form = EntryForm(data=request.POST)
         if form.is_valid():
             new_entry = form.save(commit=False)
@@ -78,14 +87,13 @@ def edit_entry(request, entry_id):
     """Edit an existing entry."""
     entry = Entry.objects.get(id=entry_id)
     topic = entry.topic
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(request, topic)
 
     if request.method != 'POST':
         # Initial request; pre-fill form with the current entry.
         form = EntryForm(instance=entry)
     else:
-        # POST date submitted; process data.
+        # POST data submitted; process data.
         form = EntryForm(instance=entry, data=request.POST)
         if form.is_valid():
             form.save()
